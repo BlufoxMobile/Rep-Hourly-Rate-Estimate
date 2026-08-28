@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rep Commission Estimator &mdash; Blufox Mobile</title>
+<meta name="description" content="Daily blended-wage estimates for Blufox Mobile sales representatives, by district and store. Estimates only &mdash; fall-off will change the final number.">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..700;1,62..125,300..700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900&display=swap" rel="stylesheet">
+<script>
+/* Watchdog, armed BEFORE the parser-blocking CDN tag. If the spreadsheet
+   reader or the report never arrives, the page must say so rather than spin
+   at a rep for the rest of the shift. */
+window.__BOOT = setTimeout(function(){
+  var b = document.getElementById('board');
+  if(b && !b.querySelector('[data-live]'))
+    b.innerHTML = '<div class="state-msg err"><span class="h">This page could not start</span>'
+      + '<p>The spreadsheet reader did not load within 30 seconds. That is almost always the network. '
+      + 'The page will keep trying on its own.</p></div>';
+}, 30000);
+</script>
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   BLUFOX · REP COMMISSION ESTIMATOR
+   The Cook County Cooks v3 "Cinema" design system, applied to a data page —
+   the same grounds, fittings and type as the Store Manager estimator, so the
+   two tools read as one building. Ink-and-walnut grounds, brass as the only
+   accent, Edison amber for caution, fresh herb for something earned.
+   Bodoni Moda drives its optical-size axis by hand, pinned BELOW the
+   automatic value at every size, because irradiation eats a Didone's
+   hairlines on a dark ground. Archivo carries every word that is read.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --ink-950:#05070a; --ink-900:#090d13; --ink-850:#0d131b;
+  --ink-800:#131a24; --ink-700:#1b2430; --ink-600:#26313f;
+  --steel:#3a4653;
+  --walnut:#4b3526;
+  --brick:#8a5238;
+  --brass-700:#8a6323; --brass-600:#a87c2e; --brass:#c8973f; --brass-400:#ddb463; --brass-300:#ebce93;
+  --amber:#f7b955;
+  --sage:#a8c686;
+  --alert:#ff6f57;
+  --bone:#f4efe6; --bone-2:#dcd5c8; --bone-3:#b4aba0;
+
+  --bg:var(--ink-950); --fg:var(--bone); --fg-muted:var(--bone-2); --fg-dim:var(--bone-3);
+  --on-brass:#1a1206;
+  --surface:color-mix(in oklab,var(--ink-800) 90%,var(--walnut) 10%);
+  --surface-2:color-mix(in oklab,var(--ink-700) 90%,var(--walnut) 10%);
+  --glass:color-mix(in oklab,var(--ink-900) 74%,transparent);
+  --line:color-mix(in oklab,var(--brass) 30%,transparent);
+  --line-soft:color-mix(in oklab,var(--bone) 13%,transparent);
+  --line-hair:color-mix(in oklab,var(--bone) 8%,transparent);
+  --rule-brass:linear-gradient(90deg,color-mix(in oklab,var(--brass) 68%,transparent),color-mix(in oklab,var(--brass) 20%,transparent) 40%,transparent);
+  --shade:3 5 9;
+
+  --t--2:clamp(.74rem,.70rem + .13vw,.90rem);
+  --t--1:clamp(.86rem,.81rem + .21vw,1.05rem);
+  --t-0 :clamp(.96rem,.90rem + .28vw,1.18rem);
+  --t-1 :clamp(1.08rem,1.00rem + .42vw,1.38rem);
+  --t-2 :clamp(1.45rem,1.15rem + 1.3vw,2.15rem);
+  --t-money:clamp(1.85rem,1.15rem + 2.5vw,3.1rem);
+  --track-caps:.165em; --track-title:.3em;
+
+  --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem; --sp-5:1.5rem;
+  --sp-6:2rem; --sp-7:2.75rem; --sp-8:3.75rem;
+  --gut:clamp(1rem,.5rem + 2.6vw,3.5rem);
+  --r-sm:3px; --r-md:6px; --r-lg:10px; --r-pill:999px;
+  --shadow-2:0 6px 14px -4px rgb(var(--shade)/.6), 0 2px 4px rgb(var(--shade)/.5);
+  --shadow-3:0 30px 80px -20px rgb(var(--shade)/.85), 0 4px 10px rgb(var(--shade)/.5);
+  --shadow-text:0 1px 0 rgb(var(--shade)/.55), 0 2px 22px rgb(var(--shade)/.8);
+  --ease-cine:cubic-bezier(.16,1,.3,1); --ease-out:cubic-bezier(.22,.61,.24,1);
+  --dur-2:190ms; --dur-3:320ms; --dur-4:520ms;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;
+  font-variation-settings:"wdth" 100;
+  font-size:var(--t-0); line-height:1.5;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:
+    radial-gradient(105% 62% at 50% -14%, color-mix(in oklab,var(--amber) 15%,transparent) 0%, transparent 58%),
+    radial-gradient(78% 52% at 12% 4%,  color-mix(in oklab,var(--brick) 20%,transparent) 0%, transparent 62%),
+    radial-gradient(85% 58% at 92% 10%, color-mix(in oklab,var(--walnut) 34%,transparent) 0%, transparent 60%),
+    linear-gradient(180deg,var(--ink-850) 0%,var(--ink-950) 58%);
+}
+body::after{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.5;
+  background-image:radial-gradient(circle at 1px 1px, color-mix(in oklab,var(--bone) 15%,transparent) 1px, transparent 0);
+  background-size:3px 3px; mix-blend-mode:soft-light;
+}
+h1,h2,h3,h4{margin:0; font-weight:500; letter-spacing:-.01em}
+.micro{
+  font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase;
+  font-variation-settings:"wdth" 88; font-weight:600; color:var(--fg-dim); line-height:1.35;
+}
+.rule{flex:1 1 auto; min-width:1.5rem; height:1px; background:var(--rule-brass)}
+.tnum{font-variant-numeric:tabular-nums lining-nums}
+.wrap{max-width:1440px; margin:0 auto; padding-inline:var(--gut)}
+a{color:var(--brass-300)}
+:focus-visible{outline:2px solid var(--brass-400); outline-offset:3px; border-radius:2px}
+button{font:inherit; color:inherit}
+.visually-hidden{position:absolute!important; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0}
+
+/* ── MASTHEAD ─────────────────────────────────────────────────────────── */
+header.masthead{padding:clamp(1.5rem,3.4vw,2.75rem) 0 var(--sp-5); position:relative}
+header.masthead::after{content:""; position:absolute; left:var(--gut); right:var(--gut); bottom:0; height:1px; background:var(--rule-brass)}
+.eyebrow{display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-3)}
+.eyebrow .micro{letter-spacing:var(--track-title)}
+h1.title{
+  font-family:"Bodoni Moda",Didot,serif; font-variation-settings:"opsz" 40;
+  font-weight:600; line-height:.96; letter-spacing:-.02em;
+  font-size:clamp(2.1rem,1.1rem + 5.2vw,4.4rem);
+  color:var(--bone); text-shadow:var(--shadow-text);
+}
+.subtitle{margin-top:var(--sp-3); color:var(--fg-muted); max-width:62ch; font-size:var(--t--1)}
+.statusrow{display:flex; flex-wrap:wrap; gap:var(--sp-2) var(--sp-3); margin-top:var(--sp-5); align-items:center}
+.pill{
+  display:inline-flex; align-items:center; gap:.45rem; padding:.42rem .8rem;
+  border:1px solid var(--line-soft); border-radius:var(--r-pill);
+  background:var(--glass); font-size:var(--t--2); letter-spacing:var(--track-caps);
+  text-transform:uppercase; font-variation-settings:"wdth" 90; font-weight:600;
+  color:var(--fg-muted); min-height:44px;
+}
+.pill .dot{width:6px; height:6px; border-radius:50%; background:var(--sage); box-shadow:0 0 8px var(--sage); flex:none}
+.pill.live{border-color:color-mix(in oklab,var(--amber) 45%,transparent); color:var(--amber)}
+.pill.live .dot{background:var(--amber); box-shadow:0 0 8px var(--amber)}
+.pill.warn{border-color:color-mix(in oklab,var(--amber) 55%,transparent); color:var(--amber)}
+.pill.warn .dot{background:var(--amber); box-shadow:0 0 8px var(--amber)}
+.pill.stale{border-color:color-mix(in oklab,var(--alert) 60%,transparent); color:var(--alert)}
+.pill.stale .dot{background:var(--alert); box-shadow:0 0 8px var(--alert)}
+.pill.brass{border-color:var(--line); color:var(--brass-300)}
+button.pill{cursor:pointer; transition:border-color var(--dur-2), color var(--dur-2)}
+button.pill:hover,button.pill:focus-visible{border-color:var(--brass); color:var(--brass-300)}
+
+/* ── FALL-OFF DISCLAIMER ──────────────────────────────────────────────── */
+.disclaimer{
+  margin:var(--sp-5) 0 0;
+  border:1px solid color-mix(in oklab,var(--amber) 34%,transparent);
+  border-left:3px solid var(--amber); border-radius:var(--r-md);
+  background:linear-gradient(90deg,color-mix(in oklab,var(--amber) 10%,transparent),transparent 70%);
+}
+.disclaimer > summary{
+  display:flex; gap:var(--sp-3); align-items:center; cursor:pointer; list-style:none;
+  padding:var(--sp-3) var(--sp-4); min-height:52px;
+}
+.disclaimer > summary::-webkit-details-marker{display:none}
+.disclaimer .mark{
+  font-family:"Bodoni Moda",serif; font-variation-settings:"opsz" 20; font-weight:700;
+  font-size:1.3rem; line-height:1; color:var(--amber); flex:none;
+  border:2px solid color-mix(in oklab,var(--amber) 60%,transparent); border-radius:2px;
+  width:1.9rem; height:1.9rem; display:grid; place-items:center;
+}
+.disclaimer strong{
+  color:var(--amber); letter-spacing:var(--track-caps); text-transform:uppercase;
+  font-size:var(--t--2); font-weight:700; font-variation-settings:"wdth" 90; line-height:1.3;
+}
+.disclaimer .more{margin-left:auto; flex:none; color:var(--amber); font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase; font-weight:600; opacity:.8}
+.disclaimer .more::after{content:"What this means +"}
+.disclaimer[open] .more::after{content:"Close \2013"}
+.disclaimer .body{padding:0 var(--sp-4) var(--sp-4) calc(1.9rem + var(--sp-3) + var(--sp-4)); max-width:80ch}
+.disclaimer p{margin:0 0 var(--sp-3); font-size:var(--t--1); color:var(--bone-2); line-height:1.6}
+.disclaimer p:last-child{margin-bottom:0}
+@media (max-width:560px){ .disclaimer .body{padding-left:var(--sp-4)} .disclaimer .more::after{content:"+"} .disclaimer[open] .more::after{content:"\2013"} }
+
+/* ── PICKER ───────────────────────────────────────────────────────────── */
+.pickwrap{margin-top:var(--sp-6)}
+.pickhead{display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-4); flex-wrap:wrap}
+.pickhead h2{font-family:"Bodoni Moda",serif; font-variation-settings:"opsz" 28; font-weight:600; font-size:var(--t-2); color:var(--bone)}
+.pickfind{margin-bottom:var(--sp-6)}
+.pickfind label.field{display:block; max-width:640px}
+.pickfind input[type="search"]{
+  width:100%; min-width:0; font:inherit; color:var(--fg); font-size:var(--t-0);
+  padding:.85rem 1rem; min-height:56px;
+  border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface);
+}
+.pickfind input[type="search"]::placeholder{color:var(--fg-dim)}
+.pickfind input[type="search"]:focus{border-color:var(--brass); outline:none}
+.pickhint{margin:var(--sp-2) 0 0; font-size:var(--t--2); color:var(--fg-dim)}
+.group{margin-bottom:var(--sp-6)}
+.group > .micro{display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-3); color:var(--brass-300); letter-spacing:var(--track-title)}
+.tiles{display:grid; gap:var(--sp-2); grid-template-columns:repeat(auto-fill,minmax(min(236px,100%),1fr))}
+.tile{
+  display:flex; flex-direction:column; gap:.25rem; text-align:left; cursor:pointer;
+  padding:var(--sp-4); min-height:76px; border:1px solid var(--line-hair); border-left:2px solid var(--line-hair);
+  border-radius:var(--r-md); background:var(--surface); box-shadow:var(--shadow-2);
+  transition:border-color var(--dur-2) var(--ease-out), background var(--dur-2), transform var(--dur-2) var(--ease-out);
+}
+.tile:hover,.tile:focus-visible{border-color:var(--brass-600); border-left-color:var(--brass); background:var(--surface-2); transform:translateY(-1px)}
+.tile .n{font-size:var(--t-1); font-weight:600; color:var(--bone); line-height:1.2; overflow-wrap:break-word}
+.tile .m{font-size:var(--t--1); color:var(--fg-dim)}
+.tile .m b{color:var(--bone-2); font-weight:500}
+.emptyfind{padding:var(--sp-6); text-align:center; color:var(--fg-muted); border:1px dashed var(--line-soft); border-radius:var(--r-md); font-size:var(--t--1)}
+
+/* ── SHEET ────────────────────────────────────────────────────────────── */
+.backrow{display:flex; align-items:center; gap:var(--sp-3); margin:var(--sp-5) 0 var(--sp-4); flex-wrap:wrap}
+.crumb{font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase; color:var(--fg-dim); font-weight:600}
+.crumb b{color:var(--bone-2); font-weight:600}
+.sheet{border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); box-shadow:var(--shadow-3); overflow:hidden; animation:reveal var(--dur-4) var(--ease-cine) both}
+@keyframes reveal{from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:none}}
+.sheet.nodata{border-left:3px solid var(--amber)}
+.sheethead{
+  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:var(--sp-4);
+  align-items:center; padding:var(--sp-5); border-bottom:1px solid var(--line-hair);
+  background:linear-gradient(120deg,color-mix(in oklab,var(--brass) 8%,transparent),transparent 62%);
+}
+.sheethead.solo{grid-template-columns:minmax(0,1fr)}
+.sheethead .who{font-family:"Bodoni Moda",serif; font-variation-settings:"opsz" 28; font-weight:600; font-size:var(--t-2); line-height:1.05; color:var(--bone); display:block; overflow-wrap:break-word}
+.sheethead .sub{display:block; margin-top:.45rem; font-size:var(--t--1); color:var(--fg-dim)}
+.sheethead .sub b{color:var(--fg-muted); font-weight:500}
+.payout{text-align:right; min-width:9.5ch}
+.payout .amt{
+  font-family:"Bodoni Moda",serif; font-variation-settings:"opsz" 30; font-weight:680;
+  font-size:var(--t-money); line-height:1; color:var(--brass-300);
+  font-variant-numeric:tabular-nums lining-nums; display:block; white-space:nowrap;
+}
+.payout .amt.unknown{color:var(--amber); font-size:var(--t-1)}
+.payout .cap{display:block; margin-top:.35rem; font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase; color:var(--fg-dim); font-weight:600}
+@media (max-width:640px){ .sheethead{grid-template-columns:1fr} .payout{text-align:left} }
+.detail{padding:var(--sp-5)}
+@media (max-width:820px){ .detail{padding:var(--sp-4)} }
+.sechead{display:flex; align-items:center; gap:var(--sp-3); margin:0 0 var(--sp-3)}
+.sechead + .sechead{margin-top:var(--sp-5)}
+
+/* ── METRICS ──────────────────────────────────────────────────────────── */
+.metrics{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--sp-2)}
+@media (max-width:900px){ .metrics{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:560px){ .metrics{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.metric{padding:var(--sp-3); border:1px solid var(--line-hair); border-left:2px solid var(--line-hair); border-radius:var(--r-sm); background:var(--surface-2)}
+.metric .k{display:block; font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase; color:var(--fg-dim); font-weight:600; line-height:1.35}
+.metric .v{display:block; margin-top:.35rem; font-size:var(--t-1); font-variant-numeric:tabular-nums lining-nums; color:var(--bone); font-weight:600}
+.metric .src{display:block; margin-top:.2rem; font-size:var(--t--2); color:var(--fg-dim); opacity:.72}
+.metric.hero{border-left-color:var(--brass); background:linear-gradient(160deg,color-mix(in oklab,var(--brass) 10%,transparent),transparent 70%)}
+.metric.hero .v{color:var(--brass-300)}
+.metric.nodata{border-left-color:var(--amber)} .metric.nodata .v{color:var(--amber); font-size:var(--t-0)}
+
+/* ── EARNINGS STRIP ───────────────────────────────────────────────────── */
+.earn{
+  margin-top:var(--sp-5); padding:var(--sp-4);
+  border:1px solid var(--line); border-radius:var(--r-md);
+  background:linear-gradient(160deg,color-mix(in oklab,var(--brass) 11%,transparent),transparent 68%);
+  display:grid; grid-template-columns:auto 1fr; gap:var(--sp-2) var(--sp-4); align-items:baseline;
+}
+.earn .k{font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase; color:var(--fg-dim); font-weight:600}
+.earn .v{font-size:var(--t-1); font-weight:700; color:var(--brass-300); font-variant-numeric:tabular-nums lining-nums; white-space:nowrap}
+.earn .note{grid-column:1/-1; font-size:var(--t--2); color:var(--fg-dim); line-height:1.6; margin:0}
+@media (max-width:560px){ .earn{grid-template-columns:1fr} }
+
+/* ── ROSTER TABLE ─────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line-hair); border-radius:var(--r-sm); background:var(--surface-2)}
+table.roster{width:100%; min-width:720px; border-collapse:collapse; font-size:var(--t--1)}
+table.roster th{
+  position:sticky; top:0; z-index:1; text-align:right; white-space:nowrap;
+  font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase;
+  color:var(--fg-dim); font-weight:600; padding:.65rem .7rem;
+  background:var(--ink-800); border-bottom:1px solid var(--line-soft);
+}
+table.roster th:first-child,table.roster td:first-child{text-align:left; position:sticky; left:0; background:var(--ink-800); z-index:2}
+table.roster tbody td:first-child{background:color-mix(in oklab,var(--ink-800) 96%,var(--walnut) 4%)}
+table.roster th:first-child{z-index:3}
+table.roster td{text-align:right; padding:.6rem .7rem; border-bottom:1px solid var(--line-hair); white-space:nowrap; font-variant-numeric:tabular-nums lining-nums; color:var(--bone-2)}
+table.roster tbody tr:last-child td{border-bottom:0}
+table.roster tbody tr.me td{background:color-mix(in oklab,var(--brass) 13%,transparent)}
+table.roster tbody tr.me td:first-child{background:color-mix(in oklab,var(--brass) 17%,var(--ink-800))}
+table.roster tbody tr.tot td{border-top:2px solid var(--line-soft); border-bottom:0; color:var(--bone); font-weight:700; background:color-mix(in oklab,var(--ink-700) 70%,transparent)}
+table.roster tbody tr.tot td:first-child{background:color-mix(in oklab,var(--ink-700) 92%,var(--walnut) 8%); color:var(--brass-300)}
+table.roster .name{color:var(--bone); font-weight:600}
+table.roster .name .sub2{display:block; font-size:var(--t--2); color:var(--fg-dim); font-weight:400; letter-spacing:0; text-transform:none}
+table.roster td.wage{color:var(--brass-300); font-weight:600}
+table.roster td.dim{color:var(--fg-dim)}
+table.roster tbody tr.clickable{cursor:pointer; transition:background var(--dur-2)}
+table.roster tbody tr.clickable:hover td{background:color-mix(in oklab,var(--bone) 6%,transparent)}
+table.roster tbody tr.clickable:hover td:first-child{background:color-mix(in oklab,var(--bone) 8%,var(--ink-800))}
+.scrollhint{margin:var(--sp-2) 0 0; font-size:var(--t--2); color:var(--fg-dim)}
+@media (min-width:820px){ .scrollhint{display:none} }
+
+/* ── SEGMENTED TABS ───────────────────────────────────────────────────── */
+.seg{
+  display:flex; gap:2px; padding:3px; margin:var(--sp-5) 0 0;
+  border:1px solid var(--line-soft); border-radius:var(--r-pill); background:var(--glass);
+  overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.seg::-webkit-scrollbar{display:none}
+.seg button{
+  flex:1 1 auto; white-space:nowrap; cursor:pointer; border:0; background:transparent;
+  border-radius:var(--r-pill); padding:.5rem 1rem; min-height:44px;
+  font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase;
+  font-weight:600; font-variation-settings:"wdth" 90; color:var(--fg-dim);
+  transition:background var(--dur-2), color var(--dur-2);
+}
+.seg button:hover{color:var(--brass-300)}
+.seg button[aria-selected="true"]{background:linear-gradient(180deg,var(--brass-400),var(--brass-600)); color:var(--on-brass)}
+.seg.small{margin-top:var(--sp-3); max-width:max-content}
+.seg.small button{flex:0 0 auto; padding:.4rem .8rem}
+
+/* ── TOP 10 ───────────────────────────────────────────────────────────── */
+.top10{display:grid; gap:var(--sp-2); margin-top:var(--sp-4)}
+.lane{
+  display:grid; grid-template-columns:2.6rem minmax(0,1fr) auto; gap:var(--sp-3);
+  align-items:center; padding:var(--sp-3) var(--sp-4); text-align:left; width:100%;
+  border:1px solid var(--line-hair); border-left:2px solid var(--line-hair);
+  border-radius:var(--r-sm); background:var(--surface-2);
+  transition:border-color var(--dur-2), transform var(--dur-2) var(--ease-out);
+}
+.lane:hover{border-left-color:var(--brass); transform:translateX(2px)}
+.lane.me{border-color:var(--brass-600); border-left-color:var(--brass); background:linear-gradient(120deg,color-mix(in oklab,var(--brass) 12%,transparent),transparent 70%)}
+.lane .pos{
+  font-family:"Bodoni Moda",serif; font-variation-settings:"opsz" 24; font-weight:680;
+  font-size:var(--t-1); color:var(--brass-300); text-align:right; font-variant-numeric:tabular-nums lining-nums;
+}
+.lane.gold .pos{color:var(--amber)}
+.lane .who{min-width:0}
+.lane .who .n{display:block; color:var(--bone); font-weight:600; overflow-wrap:break-word; line-height:1.25}
+.lane .who .w{display:block; font-size:var(--t--2); color:var(--fg-dim); margin-top:.1rem}
+.lane .val{text-align:right; font-size:var(--t-1); font-weight:700; color:var(--brass-300); font-variant-numeric:tabular-nums lining-nums; white-space:nowrap}
+.lane .val .u{font-size:var(--t--2); color:var(--fg-dim); font-weight:600; margin-left:.2rem}
+
+/* ── BUTTONS + NOTICES ────────────────────────────────────────────────── */
+.btn{display:inline-flex; align-items:center; gap:.4rem; cursor:pointer; border:1px solid var(--line-soft); background:transparent; border-radius:var(--r-pill); padding:.4rem .9rem; font-size:var(--t--2); letter-spacing:var(--track-caps); text-transform:uppercase; font-weight:600; color:var(--fg-muted); min-height:44px; transition:border-color var(--dur-2), color var(--dur-2)}
+.btn:hover,.btn:focus-visible{border-color:var(--brass); color:var(--brass-300)}
+.notice{margin-top:var(--sp-3); padding:var(--sp-3) var(--sp-4); border:1px solid var(--line-hair); border-left:2px solid var(--amber); border-radius:var(--r-sm); background:var(--surface); font-size:var(--t--1); color:var(--bone-2); line-height:1.6}
+
+/* ── RULES + FOOTER ───────────────────────────────────────────────────── */
+details.rules{margin:var(--sp-6) 0; border:1px solid var(--line-hair); border-radius:var(--r-md); background:var(--surface)}
+details.rules > summary{cursor:pointer; padding:var(--sp-4) var(--sp-5); list-style:none; display:flex; justify-content:space-between; align-items:center; gap:var(--sp-3); min-height:44px}
+details.rules > summary::-webkit-details-marker{display:none}
+details.rules > summary::after{content:"+"; font-family:"Bodoni Moda",serif; font-size:1.35rem; color:var(--brass); line-height:1}
+details.rules[open] > summary::after{content:"\2013"}
+.rulesbody{padding:0 var(--sp-5) var(--sp-5); display:grid; gap:var(--sp-4); grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+.rulecard{border:1px solid var(--line-hair); border-radius:var(--r-sm); padding:var(--sp-4); background:var(--surface-2)}
+.rulecard h4{margin:0 0 var(--sp-2); font-size:var(--t--1); color:var(--brass-300); font-weight:600}
+.rulecard table{width:100%; border-collapse:collapse; font-size:var(--t--1)}
+.rulecard td{padding:.34rem 0; border-bottom:1px solid var(--line-hair); color:var(--bone-2); vertical-align:top}
+.rulecard tr:last-child td{border-bottom:0}
+.rulecard td:last-child{text-align:right; font-variant-numeric:tabular-nums lining-nums; color:var(--bone); white-space:nowrap; padding-left:var(--sp-3)}
+.rulecard p{margin:.6rem 0 0; font-size:var(--t--2); color:var(--fg-dim); line-height:1.6}
+footer.foot{border-top:1px solid var(--line-hair); padding:var(--sp-6) 0 var(--sp-8); color:var(--fg-dim); font-size:var(--t--1)}
+footer.foot p{margin:0 0 var(--sp-2); max-width:80ch; line-height:1.65}
+footer.foot strong{color:var(--amber)}
+footer.foot code{color:var(--bone-2)}
+
+/* ── STATES ───────────────────────────────────────────────────────────── */
+.state-msg{padding:var(--sp-8) var(--sp-5); text-align:center; border:1px dashed var(--line-soft); border-radius:var(--r-md); background:var(--glass)}
+.state-msg .h{font-family:"Bodoni Moda",serif; font-variation-settings:"opsz" 24; font-size:var(--t-1); color:var(--bone); display:block; margin-bottom:var(--sp-2)}
+.state-msg p{margin:0 auto var(--sp-2); max-width:56ch; color:var(--fg-muted); font-size:var(--t--1)}
+.state-msg.err{border-color:color-mix(in oklab,var(--alert) 45%,transparent)}
+.state-msg.err .h{color:var(--alert)}
+.spin{width:34px; height:34px; margin:0 auto var(--sp-4); border:2px solid var(--ink-600); border-top-color:var(--brass); border-radius:50%; animation:spin 900ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────── */
+@media (max-width:820px){
+  body.picked h1.title{font-size:1.6rem; line-height:1.1}
+  body.picked .subtitle{display:none}
+  body.picked header.masthead{padding:var(--sp-4) 0 var(--sp-3)}
+  body.picked .statusrow{margin-top:var(--sp-3); gap:var(--sp-2)}
+  body.picked .pill{font-size:.66rem; padding:.35rem .6rem; min-height:34px}
+  body.picked button.pill{min-height:44px}
+  body.picked .disclaimer{margin-top:var(--sp-3)}
+  body.picked .disclaimer > summary{min-height:44px; padding:var(--sp-2) var(--sp-3)}
+}
+@media (max-width:600px){
+  /* Wrap the tabs into a block instead of scrolling them — a tab a rep has to
+     discover by swiping is a tab a rep never opens. */
+  .seg{flex-wrap:wrap; border-radius:var(--r-lg); overflow:visible}
+  .seg button{flex:1 1 46%; border-radius:var(--r-md)}
+}
+@media (max-width:520px){ .sheethead{padding:var(--sp-4)} }
+@media (max-width:400px){ .pill{white-space:normal; text-align:center} }
+@media (min-width:1600px){
+  header.masthead{padding:var(--sp-5) 0 var(--sp-4)}
+  h1.title{font-size:2.9rem}
+  .subtitle{display:none}
+  :root{--t-money:3.2rem; --t-1:1.5rem}
+}
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important} }
+@media (prefers-contrast:more){ :root{--line-hair:color-mix(in oklab,var(--bone) 22%,transparent); --fg-dim:var(--bone-2)} }
+@media (forced-colors:active){ .sheet,.tile,.metric,.lane{border:1px solid CanvasText} }
+@media print{
+  body::before,body::after{display:none}
+  body{background:#fff; color:#000}
+  .pickwrap,.backrow,.seg,.statusrow,details.rules{display:none}
+  .sheet{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span class="micro">Blufox Mobile</span><span class="rule"></span>
+      <span class="micro" id="eyebrow-scope">Greater Chicago &middot; Big South</span>
+    </div>
+    <h1 class="title">Rep Commission<br>Estimator</h1>
+    <p class="subtitle">Find your name to see where your month is tracking. Rebuilt automatically from the daily sales report the moment it is uploaded &mdash; every figure is a snapshot of business written so far, before anything falls off.</p>
+    <div class="statusrow" id="statusrow">
+      <span class="pill" id="pill-report"><span class="dot"></span><span id="report-date">Loading report&hellip;</span></span>
+      <span class="pill" id="pill-scope"></span>
+      <button class="pill brass" id="btn-refresh" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <details class="disclaimer" id="disc">
+    <summary><span class="mark" aria-hidden="true">!</span><strong>Estimate only &mdash; fall-off will change this number</strong><span class="more"></span></summary>
+    <div class="body">
+      <p><b>This is not your paycheck.</b> Every figure here is pulled from a mid-month sales report and shows business as it was <i>written</i>, not business that has <i>cleared</i>. Sales fall off &mdash; cancellations, non-pays, returns, disconnects inside the guarantee window, orders that never activate, corrections from Comcast &mdash; and every one of those pulls the number down after this page was built.</p>
+      <p>The blended wage shown is the report&rsquo;s own <i>&ldquo;Blended&nbsp;Wage &mdash; ESTIMATE ONLY&rdquo;</i> figure. It is a projection, it is not approved, and it is not a promise. Your actual pay is determined by finalized month-end results, chargebacks and fall-off, and official Blufox payroll calculations &mdash; which will differ from what you see here. <b>Never make a financial decision on this page.</b></p>
+      <p>Questions about your commission go to your store manager or your DM &mdash; not to this page.</p>
+    </div>
+  </details>
+
+  <div id="notices"></div>
+  <p class="visually-hidden" id="livestatus" role="status" aria-live="polite"></p>
+
+  <main id="board" aria-busy="true">
+    <div class="state-msg"><div class="spin"></div><span class="h">Reading today&rsquo;s sales report</span><p>Pulling <code>Sales&nbsp;Report.xlsx</code> from the Daily Sales Report repository&hellip;</p></div>
+  </main>
+
+  <details class="rules">
+    <summary><span class="micro" style="color:var(--brass-300)">Where every number on this page comes from</span></summary>
+    <div class="rulesbody" id="rulesbody"></div>
+  </details>
+
+  <footer class="foot">
+    <p><strong>This is an estimate, and fall-off will change it.</strong> It is generated automatically from the daily sales report and carries every limitation that report has. Figures move daily, and the final number will be different.</p>
+    <p>Scope: the <span id="foot-count">27</span> Greater Chicago and Big South stores only, grouped into districts by <code>data/store-directory.json</code>. Sourced from <code>BlufoxMobile/Daily-Sales-Report</code> &rarr; <code>data/Sales&nbsp;Report.xlsx</code>, tab <code>Rep&nbsp;Rank</code>.</p>
+    <p id="foot-build"></p>
+  </footer>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   ENGINE
+   Reads the "Rep Rank" tab of the daily sales report and shows a rep the
+   seven production figures Jeff asked for, plus the report's own estimated
+   blended wage. NOTHING on this page is recalculated from a commission plan —
+   the wage is column AH exactly as the report states it, so this page can
+   never disagree with the report it came from.
+
+   Districts come from the Admin Panel Directory's store-directory.json, so a
+   store that moves DMs moves here the moment Jeff saves it there. Only the
+   27 Greater Chicago / Big South stores in that directory are ever shown.
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+const CFG = {
+  OWNER:'BlufoxMobile', REPO:'Daily-Sales-Report',
+  PATH:'data/Sales Report.xlsx',
+  DIR_PATH:'data/store-directory.json',
+  SHEET:'Rep Rank', HEADER_ROW:4,          // 0-based: Excel row 5
+  STORE_SUFFIX:/\s*Xfinity\s*Store\s*$/i,
+  TIMEOUT_MS:15000, REFRESH_MS:15*60*1000, STALE_HOURS:30, IDLE_MS:4*60*1000,
+  /* leaderboard qualifiers — a ratio off two sales is noise, not a record */
+  MIN_HSI_FOR_GIG:5, MIN_MOBILE_FOR_PLUS:10, MIN_HOURS_FOR_WAGE:40,
+  SM_TOOL:'https://blufoxmobile.github.io/SM-Commission-Estimate/'
+};
+
+/* Store managers, DMs, ops managers and trainers all appear on the Rep Rank
+   tab, but they are not on the rep plan — they clock 130-190 hours against
+   almost no personal GP, and the report gives them a blended wage of $0. Left
+   in, they drag every store and district total and put an empty $0 line next
+   to the reps who actually wrote the business. They are set aside here and
+   pointed at their own estimator instead. Titles are matched WHOLE, never as
+   a substring: "Assistant Store Manager" and "ASM" sell, and stay. */
+const LEADERSHIP_TITLES = new Set([
+  'store manager','retail store manager','district manager','dm','ops manager',
+  'regional sales director','regional director','rd','trainer','field trainer','market trainer'
+]);
+
+/* Columns are resolved by HEADER TEXT, not by position. If someone inserts a
+   column into the daily report, a fixed index map would keep reading and
+   quietly show the wrong figure; matching on the header makes that a loud
+   failure instead. `at` is the position we expect, used only to break a tie
+   when the same header text appears twice (it does: "Premium & Mobile Plus
+   Mix (%)" is both col U and col AZ). */
+const FIELDS = {
+  rank:   {at:0,  h:'rank'},
+  name:   {at:1,  h:'employee'},
+  title:  {at:2,  h:'title'},
+  store:  {at:3,  h:'location'},
+  dm:     {at:4,  h:'dm'},
+  hours:  {at:5,  h:'total clocked'},
+  gp:     {at:6,  h:'gp $'},
+  hsi:    {at:9,  h:'hsi'},                                   // gig-attach denominator
+  gigN:   {at:10, h:'gig plans (≥180+ commissions plan)'},// gig-attach numerator
+  gig:    {at:11, h:'gig plans (≥180+ commissions plan) %'},
+  mobile: {at:12, h:'mobile mtd'},
+  tablet: {at:13, h:'tablet mtd'},
+  watches:{at:14, h:'watches mtd'},
+  plusN:  {at:19, h:'premium & mobile plus'},                 // plus-mix numerator
+  plus:   {at:20, h:'premium & mobile plus mix (%)'},
+  wage:   {at:33, h:'blended wage estimate only'},
+  score:  {at:54, h:'total score'}
+};
+const norm = s => String(s == null ? '' : s)
+  .replace(/\s+/g,' ').trim().toLowerCase()
+  .replace(/\s*\d+\s*pts?$/,'').trim();        // strip the "25 Pts" scoring suffix
+
+function resolveColumns(headerRow){
+  const cells = (headerRow || []).map(norm), IX = {}, missing = [];
+  for(const [key, def] of Object.entries(FIELDS)){
+    const hits = [];
+    for(let i = 0; i < cells.length; i++) if(cells[i] === def.h) hits.push(i);
+    if(hits.length === 1)          IX[key] = hits[0];
+    else if(hits.includes(def.at)) IX[key] = def.at;   // duplicated header, trust position
+    else if(hits.length > 1)       IX[key] = hits[0];
+    else missing.push('"' + def.h + '"');
+  }
+  if(missing.length) throw new Error(
+    'The sales report’s columns have moved. Could not find ' + missing.slice(0,3).join(', ') +
+    (missing.length > 3 ? ' and ' + (missing.length - 3) + ' more' : '') +
+    ' in the "' + CFG.SHEET + '" header row. This page was not updated for that layout, so it has stopped rather than show wrong figures.');
+  return IX;
+}
+
+/* ── PRIMITIVES ───────────────────────────────────────────────────────── */
+const isNum = v => typeof v === 'number' && isFinite(v);
+/** A blank cell is NOT a zero. Unknown figures stay null and print as
+    "not reported" — a missing wage must never read as $0.00 to a rep. */
+function readNum(v){
+  if(isNum(v)) return v;
+  if(typeof v === 'string'){
+    const t = v.replace(/[$,%\s]/g,'');
+    if(t !== '' && !isNaN(Number(t))) return Number(t);
+  }
+  return null;
+}
+function readRate(v){ const n = readNum(v); return (n != null && n >= 0 && n <= 5) ? n : null; }
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const DASH = '—';
+
+const fmt = {
+  money0: v => v == null ? DASH : '$' + Math.round(v).toLocaleString('en-US'),
+  money2: v => v == null ? DASH : '$' + v.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}),
+  wage:   v => v == null ? DASH : '$' + v.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}),
+  hours:  v => v == null ? DASH : v.toLocaleString('en-US',{minimumFractionDigits:1, maximumFractionDigits:1}),
+  int:    v => v == null ? DASH : Math.round(v).toLocaleString('en-US'),
+  pct1:   v => v == null ? DASH : (v * 100).toFixed(1) + '%',
+  score:  v => v == null ? DASH : Math.round(v).toLocaleString('en-US')
+};
+
+/* ── THE SEVEN FIGURES ────────────────────────────────────────────────────
+   One definition drives the rep card, the roster columns and every rollup,
+   so a column can never mean one thing in a card and another in a table.
+   Ratios roll up from their own numerator and denominator — averaging seven
+   reps' percentages would quietly weight a rep with two sales like a rep
+   with forty. ------------------------------------------------------------ */
+const METRICS = [
+  {k:'hours',  label:'Hours Clocked',  short:'Hours',   col:'F', f:'hours',  agg:'sum'},
+  {k:'gp',     label:'GP $',           short:'GP $',    col:'G', f:'money0', agg:'sum'},
+  {k:'gig',    label:'Gig Attach',     short:'Gig',     col:'L', f:'pct1',   agg:'ratio', num:'gigN', den:'hsi'},
+  {k:'mobile', label:'Mobile MTD',     short:'Mobile',  col:'M', f:'int',    agg:'sum'},
+  {k:'tablet', label:'Tablet MTD',     short:'Tablet',  col:'N', f:'int',    agg:'sum'},
+  {k:'watches',label:'Watches MTD',    short:'Watches', col:'O', f:'int',    agg:'sum'},
+  {k:'plus',   label:'Plus Mix',       short:'Plus Mix',col:'U', f:'pct1',   agg:'ratio', num:'plusN', den:'mobile'}
+];
+const WAGE = {k:'wage', label:'Est. Blended Wage', short:'Blended Wage', col:'AH', f:'wage'};
+
+/** Roll a list of reps into one row of the same shape. Sums are sums; ratios
+    are rebuilt from their parts; the blended wage is weighted by hours
+    clocked, which is the only honest way to average a $/hr figure. */
+function rollup(list){
+  const out = {n:list.length};
+  for(const m of METRICS){
+    if(m.agg === 'sum'){
+      let s = 0, any = false;
+      for(const r of list) if(r[m.k] != null){ s += r[m.k]; any = true; }
+      out[m.k] = any ? s : null;
+    }else{
+      let nu = 0, de = 0, any = false;
+      for(const r of list){
+        if(r[m.num] != null && r[m.den] != null){ nu += r[m.num]; de += r[m.den]; any = true; }
+      }
+      out[m.k] = (any && de > 0) ? nu / de : null;
+      out[m.k + 'Parts'] = any ? {nu:nu, de:de} : null;
+    }
+  }
+  let wh = 0, h = 0;
+  for(const r of list) if(r.wage != null && r.hours != null && r.hours > 0){ wh += r.wage * r.hours; h += r.hours; }
+  out.wage = h > 0 ? wh / h : null;
+  out.wageHours = h;
+  out.earn = (out.wage != null) ? out.wage * h : null;
+  return out;
+}
+
+/* ── STATE ────────────────────────────────────────────────────────────── */
+const STATE = {
+  reps:[], districts:[], byKey:new Map(),
+  reportDate:null, dirDate:null, dirFailed:false, pinFailed:false,
+  notices:[], sel:null, tab:'me', q:'', openDistrict:null, openStore:null,
+  top:'score', built:new Date()
+};
+
+/* ── LOAD ─────────────────────────────────────────────────────────────── */
+async function fetchWithTimeout(url, opts){
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), CFG.TIMEOUT_MS);
+  try { return await fetch(url, Object.assign({cache:'no-store', signal:ctl.signal}, opts || {})); }
+  finally { clearTimeout(t); }
+}
+const rawUrl = (path, ref) => 'https://raw.githubusercontent.com/' + CFG.OWNER + '/' + CFG.REPO + '/' +
+  (ref || 'main') + '/' + path.split('/').map(encodeURIComponent).join('/') + (ref ? '' : '?t=' + Date.now());
+
+/** Resolve the workbook at its NEWEST commit so the raw CDN cannot serve
+    yesterday's upload out of its five-minute cache. */
+async function pinnedUrl(){
+  STATE.pinFailed = false;
+  try{
+    const api = 'https://api.github.com/repos/' + CFG.OWNER + '/' + CFG.REPO +
+      '/commits?path=' + encodeURIComponent(CFG.PATH) + '&per_page=1&_=' + Date.now();
+    const r = await fetchWithTimeout(api, {headers:{Accept:'application/vnd.github+json'}});
+    if(r.ok){
+      const j = await r.json();
+      if(j && j[0] && j[0].sha){
+        const iso = j[0].commit && j[0].commit.committer && j[0].commit.committer.date;
+        if(iso) STATE.reportDate = new Date(iso);
+        return rawUrl(CFG.PATH, j[0].sha);
+      }
+    }
+    STATE.pinFailed = true;   // usually the unauthenticated 60/hour rate limit
+  }catch(e){ STATE.pinFailed = true; console.warn('pin lookup failed', e); }
+  return rawUrl(CFG.PATH);
+}
+
+/** The directory is the authority on which store belongs to which district.
+    If it cannot be read, fall back to the DM column in the report itself and
+    say so on the page rather than silently changing what a district means. */
+async function loadDirectory(){
+  try{
+    const res = await fetchWithTimeout(rawUrl(CFG.DIR_PATH));
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    const map = new Map();
+    const smNames = {};
+    for(const [store, sm] of Object.entries(j.storeManagerNames || {})){
+      const short = slug(String(store).replace(CFG.STORE_SUFFIX,'').trim());
+      if(short && sm) smNames[short] = slug(String(sm).trim());
+    }
+    for(const [store, dm] of Object.entries(j.storeDMNames || {})){
+      const short = String(store).replace(CFG.STORE_SUFFIX,'').trim();
+      if(short) map.set(slug(short), {store:short, dm:String(dm || '').trim() || 'No DM', smSlug:smNames[slug(short)] || null});
+    }
+    if(!map.size) throw new Error('no stores');
+    STATE.dmSlugs = new Set([...map.values()].map(v => slug(v.dm)));
+    STATE.dirDate = j.updatedAt ? new Date(j.updatedAt) : null;
+    STATE.dirFailed = false;
+    return map;
+  }catch(e){
+    console.warn('directory unavailable', e);
+    STATE.dirFailed = true;
+    return null;
+  }
+}
+
+async function load(){
+  const board = document.getElementById('board');
+  board.setAttribute('aria-busy','true');
+  STATE.notices = [];
+  try{
+    if(typeof XLSX === 'undefined')
+      throw new Error('The spreadsheet reader could not be loaded. That is almost always the network — check the connection and reload.');
+
+    const [dir, url] = await Promise.all([loadDirectory(), pinnedUrl()]);
+
+    let res;
+    try { res = await fetchWithTimeout(url); }
+    catch(e){ throw new Error(e && e.name === 'AbortError'
+      ? 'The sales report did not respond within ' + (CFG.TIMEOUT_MS/1000) + ' seconds. The page will keep trying.'
+      : 'The sales report could not be reached. Check the network connection.'); }
+    if(!res.ok) throw new Error('The sales report could not be downloaded (HTTP ' + res.status + ').');
+
+    if(!STATE.reportDate){
+      const lm = res.headers.get('last-modified');
+      if(lm && !isNaN(Date.parse(lm))) STATE.reportDate = new Date(lm);
+    }
+
+    let wb;
+    try { wb = XLSX.read(await res.arrayBuffer(), {type:'array'}); }
+    catch(e){ throw new Error('The report file is corrupt or incomplete. Try uploading it again.'); }
+    const ws = wb.Sheets[CFG.SHEET];
+    if(!ws) throw new Error('The report has no "' + CFG.SHEET + '" tab. Its layout may have changed.');
+    const grid = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, blankrows:true});
+    const IX = resolveColumns(grid[CFG.HEADER_ROW]);
+
+    /* Without the directory, keep the districts the directory last described
+       by name — the five DMs the report itself agrees on. */
+    const fallbackDMs = new Set(['Jacob Cabrales','Juan Carrillo','Imaad Dhorajiwala','Matthew Brooks','Tanzim Chowdhury']);
+
+    const reps = []; let noName = 0, mismatch = 0, noWage = 0, leaders = 0;
+    for(let i = CFG.HEADER_ROW + 1; i < grid.length; i++){
+      const row = grid[i]; if(!row) continue;
+      const name = String(row[IX.name] == null ? '' : row[IX.name]).trim();
+      const store = String(row[IX.store] == null ? '' : row[IX.store]).trim();
+      const repDM = String(row[IX.dm] == null ? '' : row[IX.dm]).trim();
+      if(!store) continue;
+
+      let district = null, storeName = store, dirHit = null;
+      if(dir){
+        const hit = dir.get(slug(store));
+        if(!hit) continue;                    // not one of our 27 stores
+        dirHit = hit; district = hit.dm; storeName = hit.store;
+        if(repDM && repDM !== district) mismatch++;
+      }else{
+        if(!fallbackDMs.has(repDM)) continue;
+        district = repDM;
+      }
+      if(!name){ noName++; continue; }
+
+      /* Set leadership aside — by title, and by the directory's own answer to
+         "who runs this store", which catches the rows whose title is blank. */
+      const tnorm = norm(row[IX.title]);
+      const isDM = STATE.dmSlugs && STATE.dmSlugs.has(slug(name));
+      const isSM = dirHit && dirHit.smSlug && dirHit.smSlug === slug(name);
+      if(LEADERSHIP_TITLES.has(tnorm) || isDM || isSM){ leaders++; continue; }
+
+      const r = {
+        name:name, title:String(row[IX.title] == null ? '' : row[IX.title]).trim(),
+        store:storeName, district:district, reportDM:repDM || DASH,
+        rank:readNum(row[IX.rank]), score:readNum(row[IX.score]),
+        hours:readNum(row[IX.hours]), gp:readNum(row[IX.gp]),
+        hsi:readNum(row[IX.hsi]), gigN:readNum(row[IX.gigN]), gig:readRate(row[IX.gig]),
+        mobile:readNum(row[IX.mobile]), tablet:readNum(row[IX.tablet]), watches:readNum(row[IX.watches]),
+        plusN:readNum(row[IX.plusN]), plus:readRate(row[IX.plus]),
+        wage:readNum(row[IX.wage])
+      };
+      /* $0.00/hr is the report's way of saying it has nothing for this
+         person; $900/hr is a broken cell. Neither is a fact about a rep, so
+         both read as "not reported". A genuinely low wage is left alone —
+         this page reports, it does not flatter. */
+      if(r.wage != null && (r.wage <= 0 || r.wage > 500)) r.wage = null;
+      if(r.wage == null) noWage++;
+      r.earn = (r.wage != null && r.hours != null) ? r.wage * r.hours : null;
+      r.key = slug(r.name) + '~' + slug(r.store);
+      reps.push(r);
+    }
+
+    if(!reps.length) throw new Error(dir
+      ? 'None of the 27 Greater Chicago or Big South stores appeared in this report’s Rep Rank tab.'
+      : 'No reps in the five Greater Chicago / Big South districts were found in the report.');
+
+    /* Duplicate names inside one store would collide on the URL key. */
+    const seen = new Map();
+    for(const r of reps){
+      const n = (seen.get(r.key) || 0) + 1; seen.set(r.key, n);
+      if(n > 1) r.key += '~' + n;
+    }
+
+    STATE.reps = reps;
+    STATE.byKey = new Map(reps.map(r => [r.key, r]));
+    STATE.districts = buildDistricts(reps);
+
+    if(STATE.dirFailed) STATE.notices.push('The store directory could not be read, so districts are grouped by the report’s own DM column instead of <code>store-directory.json</code>. If a store recently changed DMs, it may be in the wrong district here.');
+    if(leaders) STATE.notices.push(leaders + ' store manager, DM and trainer row' + (leaders>1?'s were':' was') +
+      ' set aside. They are not on the rep plan, and leaving them in would drag every store and district total. Managers: your estimate is on the <a href="' + CFG.SM_TOOL + '" rel="noreferrer">Store Manager Commission Estimator</a>.');
+    if(noWage) STATE.notices.push(noWage + ' rep' + (noWage>1?'s have':' has') + ' no blended wage in today’s report. That is shown as <b>not reported</b> — it is not being treated as $0.');
+    if(mismatch) STATE.notices.push(mismatch + ' rep row' + (mismatch>1?'s list':' lists') + ' a different DM than the store directory does. The directory wins here, because it is the one you maintain.');
+    if(noName) STATE.notices.push(noName + ' row' + (noName>1?'s':'') + ' had a store but no employee name and ' + (noName>1?'were':'was') + ' skipped.');
+
+    clearTimeout(window.__BOOT);
+    readHash();
+    renderStatus(); renderNotices(); renderRules(); render();
+    board.setAttribute('aria-busy','false');
+  }catch(err){
+    console.error(err);
+    clearTimeout(window.__BOOT);
+    board.setAttribute('aria-busy','false');
+    board.innerHTML = '<div class="state-msg err"><span class="h">Could not build today’s estimates</span><p>' +
+      esc(err.message) + '</p><p><button class="btn" id="btn-retry" type="button">Try again</button></p></div>';
+    const b = document.getElementById('btn-retry'); if(b) b.addEventListener('click', load);
+  }
+}
+
+function buildDistricts(reps){
+  const dmap = new Map();
+  for(const r of reps){
+    if(!dmap.has(r.district)) dmap.set(r.district, new Map());
+    const smap = dmap.get(r.district);
+    if(!smap.has(r.store)) smap.set(r.store, []);
+    smap.get(r.store).push(r);
+  }
+  const out = [];
+  for(const [dm, smap] of dmap){
+    const stores = [];
+    for(const [store, list] of smap){
+      list.sort((a,b) => (b.gp || 0) - (a.gp || 0));
+      stores.push({name:store, reps:list, tot:rollup(list)});
+    }
+    stores.sort((a,b) => a.name.localeCompare(b.name));
+    const all = stores.reduce((a,s) => a.concat(s.reps), []);
+    out.push({dm:dm, stores:stores, reps:all, tot:rollup(all)});
+  }
+  out.sort((a,b) => a.dm.localeCompare(b.dm));
+  return out;
+}
+const districtOf = dm => STATE.districts.find(d => d.dm === dm);
+const storeOf = (dm, store) => { const d = districtOf(dm); return d && d.stores.find(s => s.name === store); };
+</script>
+<script>
+'use strict';
+/* ══════════════════════════════════════════════════════════════════════════
+   VIEW
+   Four rooms off one hallway: your own numbers, your store, your district,
+   and the region's top ten. The picker is the door; the hash is the key, so
+   a rep can bookmark themselves and land straight back on their own card.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const TOPS = [
+  {k:'score',  label:'Score',       f:'score',  cap:'pts',  get:r => r.score,  desc:'the report’s own Total Score'},
+  {k:'gp',     label:'GP $',        f:'money0', cap:'',     get:r => r.gp,     desc:'gross profit written this month'},
+  {k:'mobile', label:'Mobile',      f:'int',    cap:'units',get:r => r.mobile, desc:'mobile lines MTD'},
+  {k:'gig',    label:'Gig Attach',  f:'pct1',   cap:'',     get:r => r.gig,    tie:r => r.hsi || 0,    desc:'gig plans as a share of HSI',
+   qual:r => r.hsi != null && r.hsi >= CFG.MIN_HSI_FOR_GIG, note:'Reps with fewer than ' + CFG.MIN_HSI_FOR_GIG + ' HSI sales are left out — a percentage off two sales is noise, not a record. Ties are broken by HSI volume: 100% on twenty beats 100% on five.'},
+  {k:'plus',   label:'Plus Mix',    f:'pct1',   cap:'',     get:r => r.plus,   tie:r => r.mobile || 0, desc:'premium & mobile plus as a share of mobile',
+   qual:r => r.mobile != null && r.mobile >= CFG.MIN_MOBILE_FOR_PLUS, note:'Reps with fewer than ' + CFG.MIN_MOBILE_FOR_PLUS + ' mobile lines are left out — a percentage off a handful of lines is noise, not a record. Ties are broken by mobile volume.'},
+  {k:'wage',   label:'Blended Wage',f:'wage',   cap:'/hr',  get:r => r.wage,   tie:r => r.hours || 0,  desc:'the report’s estimated blended wage',
+   qual:r => r.hours != null && r.hours >= CFG.MIN_HOURS_FOR_WAGE, note:'Reps with fewer than ' + CFG.MIN_HOURS_FOR_WAGE + ' hours clocked are left out — a few hours can throw a $/hr figure a long way.'}
+];
+const topDef = k => TOPS.find(t => t.k === k) || TOPS[0];
+/* Ties matter here: nine reps can all sit at 100% gig attach, and a flat wall
+   of 100.0% tells a rep nothing. A tie is broken by the volume underneath it —
+   100% on twenty HSI is a better month than 100% on two — then by name, so the
+   order is stable between loads instead of shuffling with the spreadsheet. */
+function laneTie(t, r){
+  if(t.k === 'gig')  return fmt.int(r.gigN) + ' of ' + fmt.int(r.hsi) + ' HSI';
+  if(t.k === 'plus') return fmt.int(r.plusN) + ' of ' + fmt.int(r.mobile) + ' mobile';
+  if(t.k === 'wage') return fmt.hours(r.hours) + ' hrs';
+  return '';
+}
+function topSort(t){
+  return (a, b) => (t.get(b) - t.get(a))
+    || ((t.tie ? t.tie(b) - t.tie(a) : (b.gp || 0) - (a.gp || 0)))
+    || a.name.localeCompare(b.name);
+}
+
+/* ── HASH ROUTING ─────────────────────────────────────────────────────── */
+function readHash(){
+  const h = new URLSearchParams(String(location.hash || '').replace(/^#/,''));
+  const rep = h.get('rep');
+  STATE.sel = (rep && STATE.byKey.has(rep)) ? rep : null;
+  const tab = h.get('tab');
+  const allowed = STATE.sel ? ['me','store','district','top'] : ['find','top'];
+  STATE.tab = allowed.includes(tab) ? tab : allowed[0];
+  if(h.get('top')) STATE.top = topDef(h.get('top')).k;
+}
+function writeHash(replace){
+  const p = new URLSearchParams();
+  if(STATE.sel) p.set('rep', STATE.sel);
+  p.set('tab', STATE.tab);
+  if(STATE.tab === 'top') p.set('top', STATE.top);
+  const url = location.pathname + location.search + '#' + p.toString();
+  if(replace) history.replaceState(null,'',url); else history.pushState(null,'',url);
+}
+function go(patch, replace){
+  Object.assign(STATE, patch);
+  const allowed = STATE.sel ? ['me','store','district','top'] : ['find','top'];
+  if(!allowed.includes(STATE.tab)) STATE.tab = allowed[0];
+  writeHash(replace); render();
+  const b = document.getElementById('board');
+  if(b && !replace) b.scrollIntoView({block:'start', behavior:'smooth'});
+}
+
+/* ── STATUS ───────────────────────────────────────────────────────────── */
+let sayTimer;
+function say(msg){ clearTimeout(sayTimer); sayTimer = setTimeout(() => {
+  const el = document.getElementById('livestatus'); if(el) el.textContent = msg; }, 400); }
+
+function renderStatus(){
+  const d = STATE.reportDate, pill = document.getElementById('pill-report'), out = document.getElementById('report-date');
+  pill.className = 'pill';
+  if(!d){ out.textContent = 'Report date unknown'; pill.classList.add('warn'); }
+  else{
+    const hrs = (Date.now() - d.getTime()) / 36e5;
+    out.textContent = 'Report ' + d.toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+    if(hrs > CFG.STALE_HOURS){ pill.classList.add('stale'); out.textContent += ' · not uploaded today'; }
+    else pill.classList.add('live');
+  }
+  const scope = document.getElementById('pill-scope');
+  const stores = STATE.districts.reduce((a,d2) => a + d2.stores.length, 0);
+  scope.textContent = STATE.districts.length + ' districts · ' + stores + ' stores · ' + STATE.reps.length + ' reps';
+  document.getElementById('foot-count').textContent = stores;
+  document.getElementById('foot-build').innerHTML =
+    'Page read the report at ' + esc(STATE.built.toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})) +
+    (STATE.pinFailed ? ' · could not pin the newest commit (GitHub rate limit) — read <code>main</code> directly, which can lag a few minutes behind an upload.' : ' · pinned to the newest upload.');
+}
+function renderNotices(){
+  const el = document.getElementById('notices');
+  el.innerHTML = STATE.notices.map(n => '<p class="notice">' + n + '</p>').join('');
+}
+
+/* ── TABS ─────────────────────────────────────────────────────────────── */
+function tabsHtml(){
+  const r = STATE.sel ? STATE.byKey.get(STATE.sel) : null;
+  const tabs = r
+    ? [['me','My numbers'], ['store', r.store], ['district','My district'], ['top','Top 10']]
+    : [['find','Find a rep'], ['top','Region top 10']];
+  return '<div class="seg" role="tablist">' + tabs.map(([k,l]) =>
+    '<button role="tab" type="button" data-tab="' + k + '" aria-selected="' + (STATE.tab === k) + '">' + esc(l) + '</button>'
+  ).join('') + '</div>';
+}
+
+/* ── PICKER ───────────────────────────────────────────────────────────── */
+function pickerHtml(){
+  const q = STATE.q.trim().toLowerCase();
+  let body;
+  if(q.length >= 2){
+    const hits = STATE.reps.filter(r =>
+      r.name.toLowerCase().includes(q) || r.store.toLowerCase().includes(q) || r.district.toLowerCase().includes(q)
+    ).sort((a,b) => a.name.localeCompare(b.name)).slice(0,60);
+    body = hits.length
+      ? '<div class="group"><span class="micro">' + hits.length + ' match' + (hits.length>1?'es':'') + '<span class="rule"></span></span><div class="tiles">' +
+        hits.map(r => repTile(r, true)).join('') + '</div></div>'
+      : '<div class="emptyfind">No rep, store or district matches “' + esc(STATE.q) + '”. Check the spelling, or clear the box to browse by district.</div>';
+  }else if(STATE.openStore){
+    const s = storeOf(STATE.openDistrict, STATE.openStore);
+    body = s
+      ? '<div class="group"><span class="micro">' + esc(s.name) + ' · ' + s.reps.length + ' reps<span class="rule"></span>' +
+        '<button class="btn" type="button" data-open-district="' + esc(STATE.openDistrict) + '">All stores</button></span>' +
+        '<div class="tiles">' + s.reps.slice().sort((a,b) => a.name.localeCompare(b.name)).map(r => repTile(r, false)).join('') + '</div></div>'
+      : '<div class="emptyfind">That store is not in today’s report.</div>';
+  }else if(STATE.openDistrict){
+    const d = districtOf(STATE.openDistrict);
+    body = d
+      ? '<div class="group"><span class="micro">' + esc(d.dm) + '’s district · ' + d.stores.length + ' stores<span class="rule"></span>' +
+        '<button class="btn" type="button" data-open-district="">All districts</button></span>' +
+        '<div class="tiles">' + d.stores.map(s =>
+          '<button class="tile" type="button" data-open-store="' + esc(s.name) + '">' +
+          '<span class="n">' + esc(s.name) + '</span>' +
+          '<span class="m">' + s.reps.length + ' reps · <b>' + fmt.money0(s.tot.gp) + '</b> GP</span></button>'
+        ).join('') + '</div></div>'
+      : '<div class="emptyfind">That district is not in today’s report.</div>';
+  }else{
+    body = '<div class="group"><span class="micro">Pick your district<span class="rule"></span></span><div class="tiles">' +
+      STATE.districts.map(d =>
+        '<button class="tile" type="button" data-open-district="' + esc(d.dm) + '">' +
+        '<span class="n">' + esc(d.dm) + '</span>' +
+        '<span class="m">' + d.stores.length + ' stores · <b>' + d.reps.length + '</b> reps</span></button>'
+      ).join('') + '</div></div>';
+  }
+  return '<div class="pickwrap" data-live="1">' +
+    '<div class="pickhead"><h2>Find yourself</h2><span class="rule"></span></div>' +
+    '<div class="pickfind"><label class="field"><span class="visually-hidden">Search by name, store or district</span>' +
+    '<input type="search" id="q" placeholder="Type your name…" autocomplete="off" spellcheck="false" value="' + esc(STATE.q) + '"></label>' +
+    '<p class="pickhint">Or browse: district → store → your name.</p></div>' + body + '</div>';
+}
+function repTile(r, showStore){
+  return '<button class="tile" type="button" data-rep="' + esc(r.key) + '">' +
+    '<span class="n">' + esc(r.name) + '</span>' +
+    '<span class="m">' + esc(r.title || 'Sales') + (showStore ? ' · <b>' + esc(r.store) + '</b>' : '') + '</span></button>';
+}
+
+/* ── PIECES ───────────────────────────────────────────────────────────── */
+function metricsHtml(o, opts){
+  opts = opts || {};
+  return '<div class="metrics">' + METRICS.map(m => {
+    const v = o[m.k], has = v != null;
+    return '<div class="metric' + (has ? '' : ' nodata') + '">' +
+      '<span class="k">' + esc(opts.short ? m.short : m.label) + '</span>' +
+      '<span class="v">' + (has ? fmt[m.f](v) : 'Not reported') + '</span>' +
+      '<span class="src">Report col ' + m.col + (m.agg === 'ratio' && o[m.k + 'Parts'] ? ' · ' + fmt.int(o[m.k+'Parts'].nu) + ' of ' + fmt.int(o[m.k+'Parts'].de) : '') + '</span>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+function headHtml(title, sub, wage, cap){
+  /* No caption means this view has no headline wage at all (the leaderboard),
+     and an empty money slot reading "Not reported" would be a lie about the
+     data rather than a fact about it. Drop the whole column instead. */
+  if(!cap) return '<header class="sheethead solo"><div><span class="who">' + title + '</span><span class="sub">' + sub + '</span></div></header>';
+  const has = wage != null;
+  return '<header class="sheethead"><div><span class="who">' + title + '</span><span class="sub">' + sub + '</span></div>' +
+    '<div class="payout"><span class="amt' + (has ? '' : ' unknown') + '">' + (has ? fmt.wage(wage) : 'Not reported') + '</span>' +
+    '<span class="cap">' + esc(cap) + '</span></div></header>';
+}
+function rosterHtml(list, opts){
+  opts = opts || {};
+  const cols = METRICS.concat([WAGE]);
+  const head = '<tr><th>' + esc(opts.firstCol || 'Rep') + '</th>' + cols.map(m => '<th>' + esc(m.short) + '</th>').join('') + '</tr>';
+  const body = list.map(row => {
+    const me = opts.meKey && row.key === opts.meKey;
+    const click = row.key ? ' class="clickable' + (me ? ' me' : '') + '" data-rep="' + esc(row.key) + '" tabindex="0"'
+                : (row.store ? ' class="clickable" data-open-store="' + esc(row.store) + '" tabindex="0"' : '');
+    return '<tr' + (click || '') + '>' +
+      '<td><span class="name">' + esc(row.label) + (row.sub ? '<span class="sub2">' + esc(row.sub) + '</span>' : '') + '</span></td>' +
+      cols.map(m => {
+        const v = row.o[m.k];
+        return '<td class="' + (m.k === 'wage' ? 'wage' : (v == null ? 'dim' : '')) + '">' + (v == null ? DASH : fmt[m.f](v)) + '</td>';
+      }).join('') + '</tr>';
+  }).join('');
+  const tot = opts.total ? '<tr class="tot"><td><span class="name">' + esc(opts.totalLabel || 'Total') + '</span></td>' +
+      cols.map(m => {
+        const v = opts.total[m.k];
+        return '<td>' + (v == null ? DASH : fmt[m.f](v)) + '</td>';
+      }).join('') + '</tr>' : '';
+  return '<div class="tablewrap"><table class="roster"><thead>' + head + '</thead><tbody>' + body + tot + '</tbody></table></div>' +
+    '<p class="scrollhint">Swipe the table sideways to see every column.</p>';
+}
+function standing(r, list, key){
+  const ranked = list.filter(x => x[key] != null).sort((a,b) => b[key] - a[key]);
+  const i = ranked.findIndex(x => x.key === r.key);
+  return i < 0 ? null : {pos:i + 1, of:ranked.length};
+}
+
+/* ── VIEWS ────────────────────────────────────────────────────────────── */
+function repView(r){
+  const st = storeOf(r.district, r.store), di = districtOf(r.district);
+  const sSt = standing(r, st ? st.reps : [], 'gp'), dSt = standing(r, di ? di.reps : [], 'gp'), rSt = standing(r, STATE.reps, 'gp');
+  const bits = [];
+  if(sSt) bits.push('#' + sSt.pos + ' of ' + sSt.of + ' at ' + esc(r.store));
+  if(dSt) bits.push('#' + dSt.pos + ' of ' + dSt.of + ' in the district');
+  if(rSt) bits.push('#' + rSt.pos + ' of ' + rSt.of + ' in the region');
+
+  const earn = (r.wage != null && r.hours != null && r.hours > 0)
+    ? '<div class="earn"><span class="k">Tracking toward</span>' +
+      '<span class="v">' + fmt.money0(r.wage * r.hours) + '</span>' +
+      '<p class="note">That is simply ' + fmt.wage(r.wage) + ' &times; ' + fmt.hours(r.hours) + ' hours clocked so far this month — the report’s own estimate applied to the hours you have already worked. It is <b>not</b> a month-end projection, and it does not account for anything that falls off between now and payroll.</p></div>'
+    : '<div class="earn"><span class="k">Tracking toward</span><span class="v">' + DASH + '</span>' +
+      '<p class="note">This needs both a blended wage and hours clocked in today’s report. One of them is missing, so nothing is shown rather than a number built on a guess.</p></div>';
+
+  return '<div class="sheet" data-live="1">' +
+    headHtml(esc(r.name),
+      esc(r.title || 'Sales') + ' · <b>' + esc(r.store) + '</b> · ' + esc(r.district) + '’s district' +
+      (bits.length ? '<br>' + bits.join(' &nbsp;·&nbsp; ') : ''),
+      r.wage, 'Est. blended wage / hr') +
+    '<div class="detail">' +
+      '<div class="sechead"><span class="micro">Your month so far</span><span class="rule"></span></div>' +
+      metricsHtml(r) + earn +
+    '</div></div>';
+}
+
+function storeView(r){
+  const s = storeOf(r.district, r.store);
+  if(!s) return '<div class="state-msg"><span class="h">Store not in today’s report</span></div>';
+  const rows = s.reps.slice().sort((a,b) => (b.gp || 0) - (a.gp || 0))
+    .map(x => ({key:x.key, label:x.name, sub:x.title || 'Sales', o:x}));
+  return '<div class="sheet" data-live="1">' +
+    headHtml(esc(s.name),
+      s.reps.length + ' reps · ' + esc(r.district) + '’s district' +
+      '<br>Blended wage is weighted by hours clocked, not a flat average of the ' + s.reps.length + ' reps.',
+      s.tot.wage, 'Store blended wage / hr') +
+    '<div class="detail">' +
+      '<div class="sechead"><span class="micro">' + esc(s.name) + ' · store totals</span><span class="rule"></span></div>' +
+      metricsHtml(s.tot) +
+      '<div class="sechead" style="margin-top:var(--sp-6)"><span class="micro">Everyone at this store</span><span class="rule"></span></div>' +
+      rosterHtml(rows, {meKey:r.key, total:s.tot, totalLabel:s.name + ' total'}) +
+    '</div></div>';
+}
+
+function districtView(r){
+  const d = districtOf(r.district);
+  if(!d) return '<div class="state-msg"><span class="h">District not in today’s report</span></div>';
+  const storeRows = d.stores.slice().sort((a,b) => (b.tot.gp || 0) - (a.tot.gp || 0))
+    .map(s => ({store:s.name, label:s.name, sub:s.reps.length + ' reps', o:s.tot}));
+  const repRows = d.reps.slice().sort((a,b) => (b.gp || 0) - (a.gp || 0))
+    .map(x => ({key:x.key, label:x.name, sub:x.store, o:x}));
+  return '<div class="sheet" data-live="1">' +
+    headHtml(esc(d.dm) + '’s district',
+      d.stores.length + ' stores · ' + d.reps.length + ' reps' +
+      '<br>Blended wage is weighted by hours clocked across the whole district.',
+      d.tot.wage, 'District blended wage / hr') +
+    '<div class="detail">' +
+      '<div class="sechead"><span class="micro">District totals</span><span class="rule"></span></div>' +
+      metricsHtml(d.tot) +
+      '<div class="sechead" style="margin-top:var(--sp-6)"><span class="micro">Store by store</span><span class="rule"></span></div>' +
+      rosterHtml(storeRows, {firstCol:'Store', total:d.tot, totalLabel:d.dm + ' total'}) +
+      '<div class="sechead" style="margin-top:var(--sp-6)"><span class="micro">Every rep in the district</span><span class="rule"></span></div>' +
+      rosterHtml(repRows, {meKey:r.key, total:d.tot, totalLabel:d.dm + ' total'}) +
+    '</div></div>';
+}
+
+function topView(){
+  const t = topDef(STATE.top);
+  const me = STATE.sel ? STATE.byKey.get(STATE.sel) : null;
+  const pool = STATE.reps.filter(x => t.get(x) != null && (!t.qual || t.qual(x)));
+  const ranked = pool.slice().sort(topSort(t));
+  const ten = ranked.slice(0,10);
+  const mine = me ? ranked.findIndex(x => x.key === me.key) : -1;
+
+  const lanes = ten.map((x,i) =>
+    '<button class="lane' + (i === 0 ? ' gold' : '') + (me && x.key === me.key ? ' me' : '') + '" type="button" data-rep="' + esc(x.key) + '">' +
+    '<span class="pos">' + (i + 1) + '</span>' +
+    '<span class="who"><span class="n">' + esc(x.name) + '</span><span class="w">' + esc(x.store) + ' · ' + esc(x.district) +
+      (t.tie ? ' · ' + esc(laneTie(t, x)) : '') + '</span></span>' +
+    '<span class="val">' + fmt[t.f](t.get(x)) + (t.cap ? '<span class="u">' + esc(t.cap) + '</span>' : '') + '</span></button>'
+  ).join('');
+
+  const yours = (me && mine >= 10)
+    ? '<div class="sechead" style="margin-top:var(--sp-5)"><span class="micro">Where you sit</span><span class="rule"></span></div>' +
+      '<div class="top10"><div class="lane me"><span class="pos">' + (mine + 1) + '</span>' +
+      '<span class="who"><span class="n">' + esc(me.name) + '</span><span class="w">' + esc(me.store) + ' · ' + esc(me.district) + '</span></span>' +
+      '<span class="val">' + fmt[t.f](t.get(me)) + (t.cap ? '<span class="u">' + esc(t.cap) + '</span>' : '') + '</span></div></div>'
+    : (me && mine < 0
+      ? '<p class="notice">You are not ranked on <b>' + esc(t.label) + '</b> today' + (t.qual ? ' — ' + esc(t.note) : ' because that figure is not reported for you') + '</p>'
+      : '');
+
+  return '<div class="sheet" data-live="1">' +
+    headHtml('Region top 10',
+      'The ' + STATE.reps.length + ' reps across all ' + STATE.districts.length + ' districts, ranked on ' + esc(t.desc) + '.' +
+      '<br>' + pool.length + ' reps qualify today.',
+      null, '') +
+    '<div class="detail">' +
+      '<div class="sechead"><span class="micro">Rank by</span><span class="rule"></span></div>' +
+      '<div class="seg small" role="tablist">' + TOPS.map(x =>
+        '<button role="tab" type="button" data-top="' + x.k + '" aria-selected="' + (x.k === t.k) + '">' + esc(x.label) + '</button>').join('') + '</div>' +
+      (t.note ? '<p class="notice">' + esc(t.note) + '</p>' : '') +
+      '<div class="top10">' + lanes + '</div>' + yours +
+    '</div></div>';
+}
+
+/* ── RENDER ───────────────────────────────────────────────────────────── */
+function render(){
+  const board = document.getElementById('board');
+  const r = STATE.sel ? STATE.byKey.get(STATE.sel) : null;
+  document.body.classList.toggle('picked', !!r);
+
+  let back = '';
+  if(r) back = '<div class="backrow"><button class="btn" type="button" data-rep="">&larr; Change rep</button>' +
+    '<span class="crumb">' + esc(r.district) + ' &rsaquo; <b>' + esc(r.store) + '</b> &rsaquo; <b>' + esc(r.name) + '</b></span></div>';
+
+  let view;
+  if(STATE.tab === 'top')            view = topView();
+  else if(!r)                        view = pickerHtml();
+  else if(STATE.tab === 'store')     view = storeView(r);
+  else if(STATE.tab === 'district')  view = districtView(r);
+  else                               view = repView(r);
+
+  board.innerHTML = tabsHtml() + back + view;
+
+  const q = document.getElementById('q');
+  if(q && STATE.focusQ){ q.focus(); const v = q.value; q.value = ''; q.value = v; }
+  STATE.focusQ = false;
+
+  say(r ? (STATE.tab === 'top' ? 'Region top ten' : r.name + ', ' + STATE.tab) : 'Rep picker');
+}
+
+/* ── EVENTS ───────────────────────────────────────────────────────────── */
+document.addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if(tab){ go({tab:tab.dataset.tab}); return; }
+  const top = e.target.closest('[data-top]');
+  if(top){ go({top:top.dataset.top, tab:'top'}, true); return; }
+  const rep = e.target.closest('[data-rep]');
+  if(rep){
+    const k = rep.dataset.rep;
+    go(k ? {sel:k, tab:(STATE.tab === 'top' ? 'me' : STATE.tab)} : {sel:null, tab:'find', q:'', openStore:null});
+    return;
+  }
+  const os = e.target.closest('[data-open-store]');
+  if(os){ go({openStore:os.dataset.openStore, sel:null, tab:'find'}); return; }
+  const od = e.target.closest('[data-open-district]');
+  if(od){ go({openDistrict:od.dataset.openDistrict || null, openStore:null, sel:null, tab:'find'}); return; }
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' && e.key !== ' ') return;
+  const row = e.target.closest('tr.clickable');
+  if(row){ e.preventDefault(); row.click(); }
+});
+document.addEventListener('input', e => {
+  if(e.target.id !== 'q') return;
+  STATE.q = e.target.value; STATE.focusQ = true;
+  const at = e.target.selectionStart;
+  render();
+  const q2 = document.getElementById('q');
+  if(q2){ try{ q2.setSelectionRange(at, at); }catch(_){} }
+});
+window.addEventListener('hashchange', () => { readHash(); render(); });
+document.getElementById('btn-refresh').addEventListener('click', () => {
+  STATE.built = new Date(); STATE.reportDate = null; load();
+});
+setInterval(() => { if(document.visibilityState === 'visible'){ STATE.built = new Date(); STATE.reportDate = null; load(); } }, CFG.REFRESH_MS);
+
+/* ── PROVENANCE ───────────────────────────────────────────────────────── */
+function renderRules(){
+  const cols = METRICS.map(m => '<tr><td>' + esc(m.label) + '</td><td>col ' + m.col + '</td></tr>').join('');
+  document.getElementById('rulesbody').innerHTML =
+    '<div class="rulecard"><h4>The seven figures</h4><table><tbody>' + cols +
+      '<tr><td>Est. Blended Wage</td><td>col AH</td></tr></tbody></table>' +
+      '<p>Read straight from the <code>Rep Rank</code> tab of the workbook Jeff uploads each morning. Columns are matched by their header text, not their position — if a column is inserted into the report, this page stops with an error instead of quietly showing the wrong number.</p></div>' +
+    '<div class="rulecard"><h4>The blended wage</h4><p>Column AH, headed <i>“Blended Wage — ESTIMATE ONLY”</i>, exactly as the report states it. Nothing on this page recalculates it from a commission plan, so this page can never disagree with the report it came from.</p>' +
+      '<p><b>Tracking toward</b> is that wage multiplied by hours clocked (col F) — the estimate applied to hours already worked. It is not a month-end projection.</p></div>' +
+    '<div class="rulecard"><h4>Store and district totals</h4><p>Units, hours and GP are added up. Gig Attach is rebuilt as gig plans ÷ HSI across the group, and Plus Mix as premium &amp; plus ÷ mobile — averaging each rep’s percentage would weight a rep with two sales the same as a rep with forty.</p>' +
+      '<p>The blended wage is weighted by hours clocked, which is the only honest way to average a $/hr figure.</p></div>' +
+    '<div class="rulecard"><h4>Districts</h4><p>Which store belongs to which district comes from <code>data/store-directory.json</code> — the file the <a href="https://blufoxmobile.github.io/Admin-Panel-Directory/" rel="noreferrer">Admin Panel Directory</a> writes. Move a store to a new DM there and it moves here on the next load. Only the stores in that directory are ever shown.</p></div>' +
+    '<div class="rulecard"><h4>Freshness</h4><p>The page asks GitHub for the newest commit that touched <code>data/Sales Report.xlsx</code> and reads the file at that exact commit, so the raw CDN cannot serve yesterday&rsquo;s copy. It re-checks every 15 minutes while the tab is open, and the pill at the top shows the report&rsquo;s own timestamp — it turns red if nothing was uploaded today.</p></div>' +
+    '<div class="rulecard"><h4>Who is on this page</h4><p>Everyone on the report’s <code>Rep&nbsp;Rank</code> tab who is on the rep plan. Store managers, DMs, ops managers and trainers are set aside — they clock full hours against almost no personal GP and the report gives them a $0 wage, so leaving them in would drag every total and put an empty line beside the reps who wrote the business. Assistant managers and team leads sell, so they stay.</p>' +
+      '<p>Managers, your own estimate lives on the <a href="' + CFG.SM_TOOL + '" rel="noreferrer">Store Manager Commission Estimator</a>.</p></div>' +
+    '<div class="rulecard"><h4>Blanks are not zeros</h4><p>A figure the report does not carry shows as <b>not reported</b>, never as 0. A blended wage of $0 is treated as missing too — nobody earns nothing per hour, so that is a gap in the report, not a fact about a rep.</p></div>';
+}
+
+load();
+</script>
+</body>
+</html>
