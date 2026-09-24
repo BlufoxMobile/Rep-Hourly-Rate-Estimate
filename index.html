@@ -461,7 +461,7 @@ const CFG = {
   TIMEOUT_MS:15000, REFRESH_MS:15*60*1000, STALE_HOURS:30, IDLE_MS:4*60*1000,
   /* leaderboard qualifiers — a ratio off two sales is noise, not a record */
   MIN_HSI_FOR_GIG:5, MIN_MOBILE_FOR_PLUS:10, MIN_HOURS_FOR_WAGE:40,
-  SM_TOOL:'https://blufoxmobile.github.io/SM-Commission-Estimate/'
+  /* Perf (2026-09-24), link fix: a link to a non-public tool was removed from this public page (see notices below). */
 };
 
 /* Store managers, DMs, ops managers and trainers all appear on the Rep Rank
@@ -760,8 +760,9 @@ async function load(){
     STATE.districts = buildDistricts(reps);
 
     if(STATE.dirFailed) STATE.notices.push('The store directory could not be read, so districts are grouped by the report’s own DM column instead of <code>store-directory.json</code>. If a store recently changed DMs, it may be in the wrong district here.');
+    /* Perf (2026-09-24), link fix: the sentence pointing managers at a non-public tool was removed. */
     if(leaders) STATE.notices.push(leaders + ' store manager, DM and trainer row' + (leaders>1?'s were':' was') +
-      ' set aside. They are not on the rep plan, and leaving them in would drag every store and district total. Managers: your estimate is on the <a href="' + CFG.SM_TOOL + '" rel="noreferrer">Store Manager Commission Estimator</a>.');
+      ' set aside. They are not on the rep plan, and leaving them in would drag every store and district total.');
     if(noWage) STATE.notices.push(noWage + ' rep' + (noWage>1?'s have':' has') + ' no blended wage in today’s report. That is shown as <b>not reported</b> — it is not being treated as $0.');
     if(mismatch) STATE.notices.push(mismatch + ' rep row' + (mismatch>1?'s list':' lists') + ' a different DM than the store directory does. The directory wins here, because it is the one you maintain.');
     if(noName) STATE.notices.push(noName + ' row' + (noName>1?'s':'') + ' had a store but no employee name and ' + (noName>1?'were':'was') + ' skipped.');
@@ -1188,10 +1189,10 @@ function renderRules(){
       '<p><b>Tracking toward</b> is that wage multiplied by hours clocked (col F) — the estimate applied to hours already worked. It is not a month-end projection.</p></div>' +
     '<div class="rulecard"><h4>Store and district totals</h4><p>Units, hours and GP are added up. Gig Attach is rebuilt as gig plans ÷ HSI across the group, and Plus Mix as premium &amp; plus ÷ mobile — averaging each rep’s percentage would weight a rep with two sales the same as a rep with forty.</p>' +
       '<p>The blended wage is weighted by hours clocked, which is the only honest way to average a $/hr figure.</p></div>' +
-    '<div class="rulecard"><h4>Districts</h4><p>Which store belongs to which district comes from <code>data/store-directory.json</code> — the file the <a href="https://blufoxmobile.github.io/Admin-Panel-Directory/" rel="noreferrer">Admin Panel Directory</a> writes. Move a store to a new DM there and it moves here on the next load. Only the stores in that directory are ever shown.</p></div>' +
+    '<div class="rulecard"><h4>Districts</h4><p>Which store belongs to which district comes from <code>data/store-directory.json</code>. Move a store to a new DM there and it moves here on the next load. Only the stores in that directory are ever shown.</p></div>' + /* Perf (2026-09-24), link fix: a link to a non-public tool was removed here. */
     '<div class="rulecard"><h4>Freshness</h4><p>The page asks GitHub for the newest commit that touched <code>data/Sales Report.xlsx</code> and reads the file at that exact commit, so the raw CDN cannot serve yesterday&rsquo;s copy. It re-checks every 15 minutes while the tab is open, and the pill at the top shows the report&rsquo;s own timestamp — it turns red if nothing was uploaded today.</p></div>' +
     '<div class="rulecard"><h4>Who is on this page</h4><p>Everyone on the report’s <code>Rep&nbsp;Rank</code> tab who is on the rep plan. Store managers, DMs, ops managers and trainers are set aside — they clock full hours against almost no personal GP and the report gives them a $0 wage, so leaving them in would drag every total and put an empty line beside the reps who wrote the business. Assistant managers and team leads sell, so they stay.</p>' +
-      '<p>Managers, your own estimate lives on the <a href="' + CFG.SM_TOOL + '" rel="noreferrer">Store Manager Commission Estimator</a>.</p></div>' +
+      '</div>' + /* Perf (2026-09-24), link fix: a paragraph linking to a non-public tool was removed here. */
     '<div class="rulecard"><h4>Blanks are not zeros</h4><p>A figure the report does not carry shows as <b>not reported</b>, never as 0. A blended wage of $0 is treated as missing too — nobody earns nothing per hour, so that is a gap in the report, not a fact about a rep.</p></div>';
 }
 
